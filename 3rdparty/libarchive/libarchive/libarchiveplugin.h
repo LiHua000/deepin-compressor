@@ -131,7 +131,7 @@ protected:
      * @param source 读句柄
      * @param dest 写句柄
      */
-    void copyDataFromSource(struct archive *source, struct archive *dest, const qlonglong &totalSize);
+    bool copyDataFromSource(struct archive *source, struct archive *dest, const qlonglong &totalSize);
 
 private:
     PluginFinishType list_New();

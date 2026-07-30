@@ -396,7 +396,15 @@ PluginFinishType LibarchivePlugin::extractFiles(const QList<FileEntry> &files, c
         case ARCHIVE_OK: {
             m_mapLongName[tempFilePathName]++;   // 保存文件路径，不同目录下的同名文件分开计数，解压成功，添加计数
 
-            copyDataFromSource(m_archiveReader.data(), writer.data(), QFileInfo(m_strArchiveName).size());
+            if (!copyDataFromSource(m_archiveReader.data(), writer.data(), QFileInfo(m_strArchiveName).size())) {
+                if (isInsufficientDiskSpace(m_extractDestDir, FILE_MAX_SIZE)) { // 暂取小于10M作为磁盘空间不足的判断标准
+                    m_eErrorType = ET_InsufficientDiskSpace;
+                } else {
+                    m_eErrorType = ET_FileWriteError;
+                }
+                emit error(("Filed error, extraction aborted."));
+                return PFT_Error;
+            }
 
             // qInfo() <<  destinationDirectory + QDir::separator() + entryName;
             // 文件权限设置
@@ -679,7 +687,7 @@ bool LibarchivePlugin::initializeReader()
     return true;
 }
 
-void LibarchivePlugin::copyDataFromSource(struct archive *source, struct archive *dest, const qlonglong &totalSize)
+bool LibarchivePlugin::copyDataFromSource(struct archive *source, struct archive *dest, const qlonglong &totalSize)
 {
     char buff[10240]; //缓存大小
     auto readBytes = archive_read_data(source, buff, sizeof(buff)); //读压缩包数据到buff
@@ -693,7 +701,7 @@ void LibarchivePlugin::copyDataFromSource(struct archive *source, struct archive
 
         archive_write_data(dest, buff, static_cast<size_t>(readBytes)); //写数据
         if (archive_errno(dest) != ARCHIVE_OK) {
-            return;
+            return false;
         }
 
         // 获取解压过程中的压缩和解压缩文件总大小、计算并发送进度（archive_filter_bytes 0：uncomp   -1：comp）
@@ -701,6 +709,7 @@ void LibarchivePlugin::copyDataFromSource(struct archive *source, struct archive
 
         readBytes = archive_read_data(source, buff, sizeof(buff));
     }
+    return true;
 }
 
 PluginFinishType LibarchivePlugin::list_New()

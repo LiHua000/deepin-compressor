@@ -721,7 +721,10 @@ bool ReadWriteLibarchivePlugin::writeEntryDelete(struct archive_entry *entry, co
     case ARCHIVE_OK:
         // If the whole archive is extracted and the total filesize is
         // available, we use partial progress.
-        copyDataFromSource(m_archiveReader.data(), m_archiveWriter.data(), totalSize);
+        if (!copyDataFromSource(m_archiveReader.data(), m_archiveWriter.data(), totalSize)) {
+            emit error(("Could not copy entry data, operation aborted."));
+            return false;
+        }
         break;
     case ARCHIVE_FAILED:
     case ARCHIVE_FATAL:
