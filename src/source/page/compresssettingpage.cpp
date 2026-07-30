@@ -22,6 +22,9 @@
 #include <QScrollArea>
 #include <QFormLayout>
 #include <QFileIconProvider>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
 #include <QMenu>
 #include <QMimeDatabase>
 #include <QDebug>
@@ -284,6 +287,7 @@ void CompressSettingPage::initUI()
 
     m_pCommentEdt->setPlaceholderText(tr("Enter up to %1 characters").arg(MAXCOMMENTLEN));
     m_pCommentEdt->setTabChangesFocus(true); // DTextEdit中Tab键切换焦点
+    m_pCommentEdt->installEventFilter(this); // 注释框拒绝外部拖拽（见 eventFilter）
 
     m_pCompressBtn->setMinimumWidth(340);    // 设置压缩按钮最小尺寸
 
@@ -988,6 +992,23 @@ bool CompressSettingPage::eventFilter(QObject *watched, QEvent *event)
                 return false;
             }
         } else {
+            return false;
+        }
+    } else if (watched == m_pCommentEdt) {
+        // 注释框不接受外部拖拽：拖拽文件到注释框会被误添加进压缩列表，
+        // 此处劫持拖拽事件——DragEnter 时认领为拖放目标，DragMove/Drop 时拒绝，
+        // 使光标显示为禁止样式且不向上层冒泡，松手后不新增任何内容。
+        switch (event->type()) {
+        case QEvent::DragEnter:
+            static_cast<QDragEnterEvent *>(event)->accept();
+            return true;
+        case QEvent::DragMove:
+            static_cast<QDragMoveEvent *>(event)->ignore();
+            return true;
+        case QEvent::Drop:
+            static_cast<QDropEvent *>(event)->ignore();
+            return true;
+        default:
             return false;
         }
     } else {
