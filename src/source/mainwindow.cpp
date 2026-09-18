@@ -386,12 +386,14 @@ void MainWindow::refreshPage()
     case PI_Success: {
         m_pMainWidget->setCurrentIndex(5);
         setTitleButtonStyle(false, false);
+        m_pOpenAction->setEnabled(false);
         titlebar()->setTitle("");
     }
     break;
     case PI_Failure: {
         m_pMainWidget->setCurrentIndex(6);
         setTitleButtonStyle(false, false);
+        m_pOpenAction->setEnabled(false);
         titlebar()->setTitle("");
     }
     break;
