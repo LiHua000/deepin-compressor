@@ -386,12 +386,14 @@ void MainWindow::refreshPage()
     case PI_Success: {
         m_pMainWidget->setCurrentIndex(5);
         setTitleButtonStyle(false, false);
+        m_pOpenAction->setEnabled(false);
         titlebar()->setTitle("");
     }
     break;
     case PI_Failure: {
         m_pMainWidget->setCurrentIndex(6);
         setTitleButtonStyle(false, false);
+        m_pOpenAction->setEnabled(false);
         titlebar()->setTitle("");
     }
     break;
@@ -1774,6 +1776,10 @@ void MainWindow::handleJobErrorFinished(ArchiveJob::JobType eJobType, ErrorType 
                 showErrorMessage(FI_Uncompress, EI_ArchiveMissingVolume,
                                  !(StartupType::ST_ExtractHere == m_eStartupType || StartupType::ST_Extractto == m_eStartupType));
                 break;
+            case ET_WrongPassword: {
+                sendMessage(new CustomFloatingMessage(icon, tr("Wrong password"), 1000, this));
+                break;
+            }
             default:
                 break;
             }
